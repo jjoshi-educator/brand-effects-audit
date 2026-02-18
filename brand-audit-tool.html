@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brand Effects Audit</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0f0e0c;
+    --paper: #f5f0e8;
+    --cream: #ede7d9;
+    --accent: #c8462b;
+    --mid: #6b6560;
+    --rule: #d0c9bc;
+    --dark: #1a1916;
+  }
+
+  body {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0;
+  }
+
+  /* ── SCREENS ── */
+  .screen {
+    display: none;
+    width: 100%;
+    min-height: 100vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    animation: fadeIn 0.5s ease;
+  }
+  .screen.active { display: flex; }
+
+  /* ── INTRO SCREEN ── */
+  #screen-intro {
+    background: var(--ink);
+    text-align: center;
+    gap: 32px;
+  }
+
+  .intro-eyebrow {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mid);
+  }
+
+  .intro-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 700;
+    line-height: 1.05;
+    color: var(--paper);
+  }
+
+  .intro-title span {
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  .intro-desc {
+    font-size: 11px;
+    color: var(--mid);
+    line-height: 1.8;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .brand-input-wrap {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .input-label {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mid);
+  }
+
+  .brand-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--mid);
+    color: var(--paper);
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    padding: 8px 0;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .brand-input::placeholder { color: #3a3835; }
+  .brand-input:focus { border-bottom-color: var(--paper); }
+
+  .brand-context {
+    background: transparent;
+    border: 1px solid #2a2724;
+    color: #8a8580;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 12px;
+    width: 100%;
+    outline: none;
+    resize: none;
+    transition: border-color 0.2s, color 0.2s;
+    line-height: 1.6;
+    min-height: 72px;
+  }
+
+  .brand-context:focus {
+    border-color: var(--mid);
+    color: var(--paper);
+  }
+
+  .brand-context::placeholder { color: #3a3835; }
+
+  .btn-primary {
+    background: var(--paper);
+    color: var(--ink);
+    border: none;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 14px 32px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    align-self: flex-start;
+    margin-top: 8px;
+  }
+
+  .btn-primary:hover { background: var(--cream); }
+  .btn-primary:active { transform: scale(0.98); }
+
+  /* ── PROBE SCREEN ── */
+  #screen-probe {
+    background: var(--ink);
+    justify-content: flex-start;
+    padding-top: 0;
+  }
+
+  .probe-header {
+    width: 100%;
+    border-bottom: 1px solid #2a2724;
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    background: var(--ink);
+    z-index: 10;
+  }
+
+  .probe-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    color: var(--paper);
+  }
+
+  .probe-progress {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .progress-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2a2724;
+    transition: background 0.3s;
+  }
+
+  .progress-dot.done { background: var(--mid); }
+  .progress-dot.active { background: var(--paper); }
+
+  .probe-body {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 56px 24px 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    flex: 1;
+  }
+
+  .probe-number {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mid);
+  }
+
+  .probe-name {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 700;
+    color: var(--paper);
+    line-height: 1.1;
+  }
+
+  .probe-name.reverse-name { color: var(--accent); }
+
+  .probe-question {
+    font-size: 13px;
+    color: #8a8580;
+    line-height: 1.7;
+    font-style: italic;
+    font-family: 'Playfair Display', serif;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #2a2724;
+  }
+
+  .probe-hint {
+    font-size: 10px;
+    color: #4a4845;
+    line-height: 1.7;
+    padding: 12px;
+    border-left: 2px solid #2a2724;
+  }
+
+  /* Resistance message */
+  .resistance-msg {
+    display: none;
+    background: #1a0f0d;
+    border: 1px solid var(--accent);
+    padding: 20px;
+    font-size: 11px;
+    line-height: 1.8;
+    color: #c8a099;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .resistance-msg.visible { display: block; }
+
+  .resistance-msg strong {
+    display: block;
+    color: var(--accent);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .answer-textarea {
+    background: transparent;
+    border: 1px solid #2a2724;
+    color: var(--paper);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 16px;
+    width: 100%;
+    outline: none;
+    resize: none;
+    transition: border-color 0.2s;
+    line-height: 1.75;
+    min-height: 140px;
+  }
+
+  .answer-textarea:focus { border-color: var(--mid); }
+  .answer-textarea::placeholder { color: #3a3835; }
+
+  .probe-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .btn-next {
+    background: transparent;
+    color: var(--paper);
+    border: 1px solid var(--mid);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 12px 28px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-next:hover {
+    background: var(--paper);
+    color: var(--ink);
+    border-color: var(--paper);
+  }
+
+  .char-hint {
+    font-size: 9px;
+    color: #3a3835;
+    letter-spacing: 0.05em;
+  }
+
+  /* Tension screen */
+  #screen-tension {
+    background: var(--dark);
+    gap: 0;
+    justify-content: flex-start;
+    padding: 0;
+  }
+
+  .tension-header {
+    width: 100%;
+    border-bottom: 1px solid #2a2724;
+    padding: 20px 40px;
+  }
+
+  .tension-eyebrow {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .tension-body {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 56px 24px 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .tension-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 700;
+    color: var(--paper);
+    line-height: 1.15;
+  }
+
+  .tension-desc {
+    font-size: 11px;
+    color: #6a6560;
+    line-height: 1.8;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #2a2724;
+    font-style: italic;
+    font-family: 'Playfair Display', serif;
+  }
+
+  .tension-textarea {
+    background: transparent;
+    border: 1px solid #2a2724;
+    color: var(--paper);
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    padding: 20px;
+    width: 100%;
+    outline: none;
+    resize: none;
+    transition: border-color 0.2s;
+    line-height: 1.8;
+    min-height: 160px;
+    font-style: italic;
+  }
+
+  .tension-textarea:focus { border-color: var(--accent); }
+  .tension-textarea::placeholder { color: #3a3835; font-style: italic; }
+
+  /* Output screen */
+  #screen-output {
+    background: var(--paper);
+    color: var(--ink);
+    justify-content: flex-start;
+    padding: 0;
+  }
+
+  .output-page {
+    width: 100%;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 48px 32px 64px;
+  }
+
+  .output-header {
+    border-top: 2px solid var(--ink);
+    border-bottom: 1px solid var(--rule);
+    padding: 18px 0 16px;
+    margin-bottom: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .output-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  .output-meta {
+    font-size: 9px;
+    color: var(--mid);
+    letter-spacing: 0.05em;
+  }
+
+  .output-brand {
+    margin-bottom: 36px;
+  }
+
+  .output-brand-label {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mid);
+    margin-bottom: 6px;
+  }
+
+  .output-brand-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .output-brand-context {
+    font-size: 11px;
+    color: var(--mid);
+    margin-top: 8px;
+    font-style: italic;
+    font-family: 'Playfair Display', serif;
+  }
+
+  .output-divider {
+    height: 1px;
+    background: var(--rule);
+    margin-bottom: 36px;
+  }
+
+  .output-quadrants {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: 1px solid var(--rule);
+  }
+
+  .output-quad {
+    padding: 28px 24px;
+    border: 1px solid var(--rule);
+  }
+
+  .output-quad.reverse-quad {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .output-quad-num {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--mid);
+    margin-bottom: 4px;
+    display: block;
+  }
+
+  .output-quad.reverse-quad .output-quad-num { color: #4a4845; }
+
+  .output-quad-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    line-height: 1.1;
+  }
+
+  .output-quad.reverse-quad .output-quad-label { color: var(--accent); }
+
+  .output-quad-text {
+    font-size: 11px;
+    line-height: 1.75;
+    color: #2a2724;
+  }
+
+  .output-quad.reverse-quad .output-quad-text { color: #c8c3bb; }
+
+  .output-tension {
+    border: 1px solid var(--rule);
+    border-top: none;
+    padding: 28px 24px;
+    position: relative;
+  }
+
+  .output-tension::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 24px; right: 24px;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  .output-tension-label {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .output-tension-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    line-height: 1.75;
+    font-style: italic;
+    color: var(--ink);
+  }
+
+  .output-footer {
+    margin-top: 32px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .output-footer span {
+    font-size: 9px;
+    color: var(--mid);
+    letter-spacing: 0.05em;
+  }
+
+  .output-footer em {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+  }
+
+  .btn-restart {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 14px 32px;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 32px;
+    display: block;
+  }
+
+  .btn-restart:hover { background: var(--dark); }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 560px) {
+    .output-quadrants { grid-template-columns: 1fr; }
+    .probe-header { padding: 16px 20px; }
+    .probe-body { padding: 40px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── SCREEN 1: INTRO ── -->
+<div id="screen-intro" class="screen active">
+  <p class="intro-eyebrow">McLuhan's Tetrad · Brand Strategy</p>
+  <h1 class="intro-title">Brand<br><span>Effects</span><br>Audit</h1>
+  <p class="intro-desc">Four probes. One tension. One page. Not what your brand says — what it does to people.</p>
+
+  <div class="brand-input-wrap">
+    <label class="input-label" for="brand-name-input">Brand name</label>
+    <input id="brand-name-input" class="brand-input" type="text" placeholder="e.g. Nike" autocomplete="off" />
+
+    <label class="input-label" for="brand-context-input" style="margin-top:12px;">One sentence on what this brand does <span style="color:#3a3835">(optional)</span></label>
+    <textarea id="brand-context-input" class="brand-context" placeholder="e.g. Athletic apparel built on the idea that anyone can be an athlete" rows="2"></textarea>
+
+    <button class="btn-primary" onclick="startAudit()">Begin audit →</button>
+  </div>
+</div>
+
+<!-- ── SCREEN 2: PROBES ── -->
+<div id="screen-probe" class="screen">
+  <div class="probe-header">
+    <span class="probe-brand" id="probe-brand-label"></span>
+    <div class="probe-progress">
+      <div class="progress-dot" id="dot-0"></div>
+      <div class="progress-dot" id="dot-1"></div>
+      <div class="progress-dot" id="dot-2"></div>
+      <div class="progress-dot" id="dot-3"></div>
+    </div>
+  </div>
+
+  <div class="probe-body">
+    <div>
+      <p class="probe-number" id="probe-number"></p>
+      <h2 class="probe-name" id="probe-name"></h2>
+    </div>
+    <p class="probe-question" id="probe-question"></p>
+    <p class="probe-hint" id="probe-hint"></p>
+
+    <div class="resistance-msg" id="resistance-msg">
+      <strong>That answer is too safe.</strong>
+      <span id="resistance-text"></span>
+    </div>
+
+    <textarea class="answer-textarea" id="answer-textarea" placeholder="" rows="6"></textarea>
+
+    <div class="probe-actions">
+      <span class="char-hint" id="char-hint"></span>
+      <button class="btn-next" id="btn-next" onclick="nextProbe()">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN 3: TENSION ── -->
+<div id="screen-tension" class="screen">
+  <div class="tension-header">
+    <p class="tension-eyebrow">Final step — Central Tension</p>
+  </div>
+  <div class="tension-body">
+    <h2 class="tension-title">The contradiction<br>this brand can't resolve.</h2>
+    <p class="tension-desc">Not a summary. Not a conclusion. The one thing that's true about this brand that it can never fully escape. Write it as a single paragraph. End without telling anyone what to do about it.</p>
+    <textarea class="tension-textarea" id="tension-textarea" placeholder="The contradiction at the centre of this brand is..." rows="6"></textarea>
+    <div class="probe-actions">
+      <span class="char-hint">One paragraph. No solutions.</span>
+      <button class="btn-next" onclick="finishAudit()">Generate audit →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN 4: OUTPUT ── -->
+<div id="screen-output" class="screen">
+  <div class="output-page">
+    <div class="output-header">
+      <div>
+        <div class="output-title">Brand Effects Audit</div>
+        <div style="font-size:9px;color:var(--mid);letter-spacing:0.05em;margin-top:3px;">Grounded in McLuhan's Tetrad of Media Effects</div>
+      </div>
+      <div class="output-meta" id="output-date"></div>
+    </div>
+
+    <div class="output-brand">
+      <div class="output-brand-label">Subject Brand</div>
+      <div class="output-brand-name" id="output-brand-name"></div>
+      <div class="output-brand-context" id="output-brand-context"></div>
+    </div>
+
+    <div class="output-divider"></div>
+
+    <div class="output-quadrants">
+      <div class="output-quad">
+        <span class="output-quad-num">01</span>
+        <div class="output-quad-label">Amplifies</div>
+        <div class="output-quad-text" id="out-amplifies"></div>
+      </div>
+      <div class="output-quad">
+        <span class="output-quad-num">02</span>
+        <div class="output-quad-label">Displaces</div>
+        <div class="output-quad-text" id="out-displaces"></div>
+      </div>
+      <div class="output-quad">
+        <span class="output-quad-num">03</span>
+        <div class="output-quad-label">Retrieves</div>
+        <div class="output-quad-text" id="out-retrieves"></div>
+      </div>
+      <div class="output-quad reverse-quad">
+        <span class="output-quad-num">04</span>
+        <div class="output-quad-label">Reverses Into</div>
+        <div class="output-quad-text" id="out-reverses"></div>
+      </div>
+    </div>
+
+    <div class="output-tension">
+      <div class="output-tension-label">Central Tension</div>
+      <div class="output-tension-text" id="out-tension"></div>
+    </div>
+
+    <div class="output-footer">
+      <span>Analog draft &nbsp;·&nbsp; Not for distribution</span>
+      <span><em>A thinking probe, not an answer machine.</em></span>
+    </div>
+
+    <button class="btn-restart" onclick="restart()">← Run another audit</button>
+  </div>
+</div>
+
+<script>
+const probes = [
+  {
+    number: "Probe 01 of 04",
+    name: "Amplifies",
+    nameClass: "",
+    question: "When someone brings this brand into their life, what gets louder? What feeling, belief, or sense of self becomes stronger because of it?",
+    hint: "You're not asking what the brand claims to do. You're asking what it actually does to a person's inner life and self-perception.",
+    placeholder: "This brand turns up...",
+    resistance: null
+  },
+  {
+    number: "Probe 02 of 04",
+    name: "Displaces",
+    nameClass: "",
+    question: "What quietly disappears or becomes less relevant when this brand enters someone's life? What did people do, feel, or believe before — that this brand now replaces or makes feel inadequate?",
+    hint: "This is often about competitors, but it's also about states of mind, habits, and older ways of being.",
+    placeholder: "This brand makes less necessary...",
+    resistance: null
+  },
+  {
+    number: "Probe 03 of 04",
+    name: "Retrieves",
+    nameClass: "",
+    question: "What human need, value, or way of living — that had gone quiet or felt lost — does this brand make feel available again? What is it quietly promising to restore?",
+    hint: "This is where brand power usually lives. The brands that last are almost always retrieving something ancient.",
+    placeholder: "This brand brings back...",
+    resistance: null
+  },
+  {
+    number: "Probe 04 of 04",
+    name: "Reverses Into",
+    nameClass: "reverse-name",
+    question: "If this brand succeeds completely — gets everything it's reaching for, scales to its logical conclusion — what does it flip into? What's the shadow version of itself?",
+    hint: "Your first answer won't count. Write it anyway. The second answer is where the real thing lives.",
+    placeholder: "At its extreme, this brand becomes...",
+    resistance: {
+      text: "Your first answer describes what could go wrong. That's not reversal — that's risk. Reversal is when the brand's own logic turns against itself. The thing it becomes is the opposite of what it intended, because it succeeded too completely. Write it again."
+    }
+  }
+];
+
+let currentProbe = 0;
+let answers = [];
+let reverseAttempts = 0;
+let brandName = '';
+let brandContext = '';
+
+function startAudit() {
+  brandName = document.getElementById('brand-name-input').value.trim();
+  if (!brandName) {
+    document.getElementById('brand-name-input').focus();
+    return;
+  }
+  brandContext = document.getElementById('brand-context-input').value.trim();
+  currentProbe = 0;
+  answers = [];
+  reverseAttempts = 0;
+  showProbe(0);
+  showScreen('screen-probe');
+}
+
+function showProbe(index) {
+  const probe = probes[index];
+  document.getElementById('probe-brand-label').textContent = brandName;
+  document.getElementById('probe-number').textContent = probe.number;
+  document.getElementById('probe-name').textContent = probe.name;
+  document.getElementById('probe-name').className = 'probe-name ' + probe.nameClass;
+  document.getElementById('probe-question').textContent = probe.question;
+  document.getElementById('probe-hint').textContent = probe.hint;
+  document.getElementById('answer-textarea').value = '';
+  document.getElementById('answer-textarea').placeholder = probe.placeholder;
+  document.getElementById('resistance-msg').classList.remove('visible');
+  document.getElementById('char-hint').textContent = index === 3 ? 'Write it once. Then write it again.' : 'Be specific. Generic answers don\'t stop rooms.';
+
+  // progress dots
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById('dot-' + i);
+    dot.className = 'progress-dot';
+    if (i < index) dot.classList.add('done');
+    if (i === index) dot.classList.add('active');
+  }
+
+  setTimeout(() => document.getElementById('answer-textarea').focus(), 100);
+}
+
+function nextProbe() {
+  const answer = document.getElementById('answer-textarea').value.trim();
+  if (answer.length < 20) {
+    document.getElementById('answer-textarea').style.borderColor = 'var(--accent)';
+    setTimeout(() => document.getElementById('answer-textarea').style.borderColor = '', 800);
+    return;
+  }
+
+  // Reverse quadrant resistance
+  if (currentProbe === 3) {
+    if (reverseAttempts === 0) {
+      reverseAttempts = 1;
+      document.getElementById('resistance-msg').classList.add('visible');
+      document.getElementById('resistance-text').textContent = probes[3].resistance.text;
+      document.getElementById('answer-textarea').value = '';
+      document.getElementById('answer-textarea').placeholder = 'Write it again — go further...';
+      document.getElementById('char-hint').textContent = 'The second answer is closer to true.';
+      document.getElementById('answer-textarea').focus();
+      return;
+    }
+  }
+
+  answers.push(answer);
+
+  if (currentProbe < 3) {
+    currentProbe++;
+    showProbe(currentProbe);
+  } else {
+    showScreen('screen-tension');
+    setTimeout(() => document.getElementById('tension-textarea').focus(), 100);
+  }
+}
+
+function finishAudit() {
+  const tension = document.getElementById('tension-textarea').value.trim();
+  if (tension.length < 30) {
+    document.getElementById('tension-textarea').style.borderColor = 'var(--accent)';
+    setTimeout(() => document.getElementById('tension-textarea').style.borderColor = '', 800);
+    return;
+  }
+
+  // Populate output
+  document.getElementById('output-brand-name').textContent = brandName;
+  document.getElementById('output-brand-context').textContent = brandContext;
+  document.getElementById('out-amplifies').textContent = answers[0];
+  document.getElementById('out-displaces').textContent = answers[1];
+  document.getElementById('out-retrieves').textContent = answers[2];
+  document.getElementById('out-reverses').textContent = answers[3];
+  document.getElementById('out-tension').textContent = tension;
+
+  const now = new Date();
+  document.getElementById('output-date').textContent = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  showScreen('screen-output');
+}
+
+function restart() {
+  reverseAttempts = 0;
+  answers = [];
+  document.getElementById('brand-name-input').value = '';
+  document.getElementById('brand-context-input').value = '';
+  showScreen('screen-intro');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>
